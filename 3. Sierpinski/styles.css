@@ -1,6 +1,9 @@
+/*Se asigna un size al slider para controlar las subdivisiones del triangulo*/
 input{
     width: 25%;
 }
+
+/*Size y alignment del texto indicando el numero de subdivisiones aplicadas dentro del triangulo*/
 p{
     width: 25%;
     text-align: center;
