@@ -1,0 +1,63 @@
+@charset "UTF-8";
+
+#webglcanvas {
+	border:none;
+	background-color:#ffffff;
+}
+
+#title {
+	position:absolute;
+	left:20px;
+	top:20px;
+	color:gold;
+}
+
+#prompt {
+	position:absolute;
+	bottom:20px;
+	left:20px;
+	color:#b8c3f5;
+}
+
+#status {
+	position:absolute;
+	bottom:20px;
+	width:200px;
+	height:40px;
+	right:20px;
+	color:gold;
+}
+
+#rotation {
+	position:absolute;
+	left:40px;
+	top:0px;
+}
+
+#scale {
+	position:absolute;
+	left:40px;
+	top:20px;
+}
+
+#slider {
+	position:absolute;
+	width:900px;
+	top:780px;
+	height:10px;
+	left: 60px;
+	background:#e9e9e9;
+}
+
+#webglcanvas {
+	background: #ffffff;
+}
+
+#my-gui-container {
+	position: absolute;
+	top: 0px;
+	left: 955px;
+	z-index: 10;
+}
+
+
