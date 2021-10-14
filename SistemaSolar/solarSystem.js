@@ -1,7 +1,7 @@
 import * as THREE from "../libs/three.js/r131/three.module.js";
-import { OrbitControls } from '../libs/three.js/r125/controls/OrbitControls.js';
-import { OBJLoader } from '../libs/three.js/r125/loaders/OBJLoader.js';
-import { MTLLoader } from '../libs/three.js/r125/loaders/MTLLoader.js';
+import { OrbitControls } from '../libs/three.js/r131/controls/OrbitControls.js';
+import { OBJLoader } from '../libs/three.js/r131/loaders/OBJLoader.js';
+import { MTLLoader } from '../libs/three.js/r131/loaders/MTLLoader.js';
 
 let renderer = null, scene = null, camera = null;
 let orbitControls = null;
@@ -9,6 +9,7 @@ let materials = {};
 let textureMap = null;
 let bumpMap = null;
 let sistemaSolar = null;
+let cinturonAsteroides = null;
 let planetas = [];
 let velocidadRotaciones = [];
 let distanciaAlSol = [];
@@ -16,15 +17,18 @@ const velocidadesRotacion = [1, 0.7, 0.65, 0.48, 0.38, 0.32, 0.28, 0.18, 0.12];
 let posicionesLunas = [[], [], [], [], [], [], [], [], []]
 let lunas = [[], [], [], [], [], [], [], [], []];
 let esfera = null;
+let asteroide = null;
+let asteroides = [];
 
-const duration = 5000; // ms
+let objMtlModelUrl = {obj:'./Asteroide/10464_Asteroid_v1_Iterations-2.obj', mtl:'./Asteroide/10464_Asteroid_v1_Iterations-2.mtl'};
+
 let currentTime = Date.now();
 
 function main()
 {
+    cargarAsteroide(objMtlModelUrl);
     const canvas = document.getElementById("webglcanvas");
-    createScene(canvas);
-    update();
+    setTimeout(function(){createScene(canvas); update();}, 2000);
 }
 
 //Realiza las actualizaciones sobre los diferentes componentes del Sistema Solar 
@@ -37,7 +41,7 @@ function animate()
 
     planetas.forEach((planeta, index) => {
         const velocidad = velocidadRotaciones[index];
-        planeta.rotation.y += velocidad
+        planeta.rotation.y += velocidad / 2.9
         planeta.position.set(
             Math.cos(valorTraslacion * velocidadesRotacion[index]) * distanciaAlSol[index], 0, Math.sin(valorTraslacion * velocidadesRotacion[index]) * distanciaAlSol[index]
         );
@@ -45,7 +49,6 @@ function animate()
 
     for(var i = 0; i <lunas.length; i++){
         for(var j = 0; j<lunas[i].length; j++){
-            console.log(lunas[i][j].position.z)
             lunas[i][j].rotation.y += 0.1 //Al parecer las lunas tienen rotacion y traslacion jaja
             lunas[i][j].position.set(
                 Math.cos(valorTraslacion * velocidadesRotacion[j]) * (posicionesLunas[i][j][1] - distanciaAlSol[i]), posicionesLunas[i][j][0], 
@@ -53,6 +56,13 @@ function animate()
             )
         }
     }
+    
+    for(const object of asteroides)
+        if(object){
+            object.rotation.x += 0.008;
+            object.rotation.y += 0.008;
+            object.rotation.z += 0.008;
+        }  
 }
 
 //Actualiza constantemente la escena
@@ -103,16 +113,89 @@ function crearLuna(indicePlaneta, numeroLunas){
     else{
         var luna = new THREE.Mesh(esfera, materials["moonTexture"])
         luna.visible = true;
-        let y = (Math.random() * (0.1 - 0.01) + 0.01)
-        let z = planetas[indicePlaneta].position.z + (Math.random() * (2 - 1.04) + 1.04)
+        let y = (Math.random() * (2.2 - 1.1) + 1.1)
+        let z = planetas[indicePlaneta].position.z + (Math.random() * (7 - 5) + 5)
         luna.position.set(0, y, z)
-        luna.scale.set(.02, .02, .02)
-        sistemaSolar.add(luna);
+        luna.scale.set(.08, .08, .08)
+        sistemaSolar.add(luna)
+        planetas[indicePlaneta].add(luna)
         lunas[indicePlaneta].push(luna)
         posicionesLunas[indicePlaneta].push([y,z])
         crearLuna(indicePlaneta, numeroLunas - 1);
     }
 }
+
+function crearCintunonAsteroides(distancia, numeroAsteroides){
+    cinturonAsteroides = new THREE.Object3D;
+    sistemaSolar.add(cinturonAsteroides)
+    cinturonAsteroides.visible = true;
+    cinturonAsteroides.position.set(0,0,distancia);
+    let orbitaAsteroides =  new THREE.Shape();
+    orbitaAsteroides.moveTo(distancia, 0); // https://threejs.org/docs/#api/en/extras/core/Path.moveTo
+    orbitaAsteroides.absarc(0,0,distancia, 0, 2 * Math.PI, false);
+    let puntosOrbitaA = orbitaAsteroides.getPoints(numeroAsteroides);
+    let geometriaOrbitaA = new THREE.BufferGeometry().setFromPoints(puntosOrbitaA);
+    geometriaOrbitaA.rotateX(THREE.Math.degToRad(-90))
+    let materialOrbitaA = new THREE.LineBasicMaterial({color: 0xff0000});
+    let orbitaDibujadaA = new THREE.Line(geometriaOrbitaA, materialOrbitaA)
+    scene.add(orbitaDibujadaA);
+    
+    for(var i = 0; i<((numeroAsteroides) * 2) / 6; i++){
+        let asteroideNuevo = asteroide.clone(); 
+        asteroideNuevo.scale.set(0.0005, 0.0005, 0.0005);
+        
+        let x = (Math.random() * (3.4 - 2) + 2)
+        let y = (Math.random() * (1 - 0.5) + 0.5)
+        let z = (Math.random() * (3. - 2) + 2)
+        let signoX = Math.random()
+        let signoY = Math.random()
+        let signoZ = Math.random()
+        if(signoX > 0.49){
+            x = x * -1
+        }
+        if(signoY > 0.49){
+            y = y * -1
+        }
+        if(signoZ > 0.49){
+            z = z * -1
+        }
+        
+        asteroideNuevo.position.x +=  geometriaOrbitaA.attributes.position.array[(27*i)] + x;
+        asteroideNuevo.position.y +=  geometriaOrbitaA.attributes.position.array[(27*i) + 1] + y;
+        asteroideNuevo.position.z +=  geometriaOrbitaA.attributes.position.array[(27*i) + 2] + z;
+        sistemaSolar.add(asteroideNuevo);
+        cinturonAsteroides.add(asteroideNuevo);
+        scene.add(asteroideNuevo)
+        asteroides.push(asteroideNuevo);
+    }
+}
+
+function onError ( err ){ console.error( err ); };
+
+function onProgress( xhr ) {
+
+    if ( xhr.lengthComputable ) {
+
+        const percentComplete = xhr.loaded / xhr.total * 100;
+        console.log( xhr.target.responseURL, Math.round( percentComplete, 2 ) + '% downloaded' );
+    }
+}
+
+async function cargarAsteroide(model){
+    try
+    {
+        const mtlLoader = new MTLLoader();
+        const materials = await mtlLoader.loadAsync(model.mtl, onProgress, onError);
+        materials.preload();
+        const objLoader = new OBJLoader();
+        objLoader.setMaterials(materials);
+        asteroide = await objLoader.loadAsync(model.obj, onProgress, onError);
+    }
+    catch (err){
+        onError(err);
+    }
+}
+
 
 function createScene(canvas)
 {
@@ -131,7 +214,7 @@ function createScene(canvas)
 
     //Agrega una camara a la escena 
     camera = new THREE.PerspectiveCamera( 45, canvas.width / canvas.height, 1, 4000 );
-    camera.position.set(-9,6,14)
+    camera.position.set(-9,6,25)
     scene.add(camera);
 
     orbitControls = new OrbitControls(camera, renderer.domElement)
@@ -173,7 +256,7 @@ function createScene(canvas)
 
     materiales("./textures/jupitermap.jpg", null, "jupiterTexture");
     let jupiter= new THREE.Mesh(esfera, materials["jupiterTexture"])
-    ajustarPlaneta(sistemaSolar, jupiter, 34.2/1.2, (.5)*1.5, 2.1)
+    ajustarPlaneta(sistemaSolar, jupiter, 48/1.2, (.5)*1.5, 2.1)
     crearLuna(4,5)
 
     materiales("./textures/saturnmap.jpg", null, "saturnTexture")
@@ -193,10 +276,13 @@ function createScene(canvas)
 
     materiales("./textures/plutomap1k.jpg", null, "plutoTexture")
     let pluton =  new THREE.Mesh(esfera, materials["plutoTexture"])
-    ajustarPlaneta(sistemaSolar, pluton, (120)/1.2, 0.09 *1.5, 0.68)
+    ajustarPlaneta(sistemaSolar, pluton, (120)/1.2, 0.14 *1.5, 0.68)
     crearLuna(8,3)
 
     scene.add(sistemaSolar);
+
+    crearCintunonAsteroides(30, 8000);
+
 }
 
 window.onload = () => main();
